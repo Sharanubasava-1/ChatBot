@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SongBot</title>
+  <style>
+    :root {
+        --primary-color: #4a90e2;
+        --secondary-color: #e94e77;
+        --background-color: #f4f4f8;
+        --text-color: #1a1a2e;
+        --accent-color: #c25e5e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, rgba(244, 244, 248, 0.8), rgba(230, 233, 240, 0.8)),
+            url('background.jpg') no-repeat center center/cover;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: var(--primary-color);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .chat-header h1 {
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      background: var(--background-color);
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      max-width: 80%;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      line-height: 1.5;
+    }
+
+    .message.user {
+      background: var(--primary-color);
+      color: white;
+      align-self: flex-end;
+    }
+
+    .message.bot {
+      background: #f4f4f8;
+      color: var(--text-color);
+      align-self: flex-start;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 1rem;
+      background: white;
+      border-top: 1px solid #eee;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .chat-input button {
+      background: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 0.75rem 1rem;
+      margin-left: 0.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .chat-input button:hover {
+      background: darken(var(--secondary-color), 10%);
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h1>SongBot</h1>
+    </div>
+    <div class="chat-body" id="chatBody">
+    <div class="message bot">Hello!. Let me help you find songs. Just type a language and genre, like "Hindi Pop Song" or "English Rock Song".</div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="userInput" placeholder="Type a message...">
+      <button onclick="handleUserInput()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Song Data
+    const songs = {
+        kannada: {
+            pop: ["Kenchalo Manchalo","Sontada Vishya", "Party Freak","Ondu Maathali"],
+            classical: ["Krishna Nee Begane", "Bhagyada Lakshmi Baramma", "Toredu Jeevisabahude"],
+            rock: ["Tagaru", "Ogm","Salaga","Kulka beda Kulka Beda Silku", "Bad Boys"],
+            romantic: ["Nagu Endide", "Ondu Malebillu", "Nooru Janmaku","Preetiya Hesare Neenu","Mayavi"],
+        },
+        hindi: {
+            pop: ["Kala Chashma", "Lungi Dance", "Brown Rang","Blue Eyes"],
+            classical: ["Raga Yaman", "Bhoopali", "Raga Durga", "Vaishnava Janato"],
+            rock: ["Bulleya", "Jogi", "Kar Har Maidaan Fateh"],
+            romantic: ["Tum Se Hi", "Raabta", "Galliyan", "Jeene Laga Hoon","Chahun main ya na"],
+        },
+        telugu: {
+            pop: ["Butta Bomma", "Psycho Saiyaan", "Saami Saami", "Vachinde"],
+            classical: ["Sri Venkateswara Suprabhatam", "Mohana Ragam", "Nagumomu", "Rama Nee Samanamevaru"],
+            rock: ["Eyy Bidda Idhi Naa Adda", "Bad Boy", "Bang Bang Bang", "Aakaasam Nee Haddura"],
+            romantic: ["Maate Vinadhuga","Evarevaro","Chuttamalle", "Jala Jala Jalapaatham Nuvvu"],
+        },
+        tamil: {
+            pop: ["Thozhiye","Kaathadi","Nandhalala","Venum"],
+            classical: ["Kurai Ondrum Illai", "Raja Raja Chozhan", "Endaro Mahanubhavulu", "Venkatachala Nilayam"],
+            rock: ["Vaathi Coming", "Aaluma Doluma", "Kolaveri Di", "Rowdy Baby", "Oh Oh"],
+            romantic: ["Munbe Vaa", "Ennai Konjam Maatri", "Uyire Uyire", "Vaseegara"],
+        },
+        malayalam: {
+            pop: ["Jimikki Kammal", "Dum Dum Dum", "Thaniye Mizhikal", "Entammede Jimikki Kammal", "Pavizha Mazha"],
+            classical: ["Harivarasanam", "Krishna Nee Enne Ariyilla", "Chembai Vaidyanatha Bhagavathar Songs", "Omana Thingal Kidavo"],
+            rock: ["Illuminati", "Manavalan Thug", "Rockaankuthu", "Kanne Kanne"],
+            romantic: ["Malare", "Parudeesa", "Vijanathayil", "Manikya Malaraya Poovi"],
+        },
+
+        english: {
+            pop: ["Shape of You", "Blinding Lights", "Perfect", "Uptown Funk", "Levitating"],
+            classical: ["Canon in D", "Clair de Lune", "The Blue Danube", "Pachelbel Canon"],
+            rock: ["Bohemian Rhapsody", "Stairway to Heaven", "Hotel California", "Sweet Child O' Mine"],
+            romantic: ["Thinking Out Loud", "All of Me", "I Don't Want to Miss a Thing", "My Heart Will Go On"],
+        },
+        
+    };
+
+    // Handle input and generate response
+    function processInput(input) {
+        const normalizedInput = input.toLowerCase().trim();
+        const [language, genre] = normalizedInput.split(" ");
+        if (language && genre && songs[language]?.[genre]) {
+            const recommendations = songs[language][genre].slice(0, 3).join(", ");
+            return `Here are some ${genre} songs in ${language}: ${recommendations}`;
+        } else if (language && songs[language]) {
+            return `Which genre in ${language}? Options: ${Object.keys(songs[language]).join(", ")}`;
+        } else if (genre) {
+            return `Which language for ${genre}? Options: ${Object.keys(songs).join(", ")}`;
+        }
+        return "I didn't understand. Try typing something like 'Hindi Pop' or 'English Rock'.";
+    }
+
+    // Add a message to the chat
+    function addMessage(content, isUser) {
+        const chatBody = document.getElementById("chatBody");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${isUser ? "user" : "bot"}`;
+        messageDiv.textContent = content;
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    // Handle user input
+    function handleUserInput() {
+        const inputField = document.getElementById("userInput");
+        const userInput = inputField.value.trim();
+        if (!userInput) return;
+        addMessage(userInput, true);
+        inputField.value = "";
+        const botResponse = processInput(userInput);
+        setTimeout(() => addMessage(botResponse, false), 500);
+    }
+
+    // Add Enter key functionality
+    document.getElementById("userInput").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault(); // Prevent the default behavior of Enter key
+            handleUserInput(); // Trigger the send message function
+        }
+    });
+  </script>
+</body>
+</html>
